@@ -55,10 +55,6 @@ class Home(QWidget):
                 activity_widget = self.createActivityWidget(activity)
                 activity_widgets.append(activity_widget)
 
-            new_day_button = QPushButton("New Day")
-            new_day_button.clicked.connect(lambda : self.newDay())
-            new_day_button.setFixedSize(65, 30)
-
             #report 
             report_container = QWidget()
             report_container.setLayout(QHBoxLayout())
@@ -105,8 +101,6 @@ class Home(QWidget):
                 activity_layout.addWidget(widget)
             scroll.setWidget(activity_container)
             box_layout.addWidget(scroll)
-
-            box_layout.addWidget(new_day_button, alignment=Qt.AlignCenter)
             box_layout.addStretch()
 
             box_layout.addWidget(report_label, alignment=Qt.AlignCenter)
@@ -157,28 +151,6 @@ class Home(QWidget):
         activity_widget.setFixedHeight(40)
 
         return activity_widget
-
-    def newDay(self):
-        with open(resource_path('data.json'), 'r+') as f:
-            data = json.load(f)
-
-            data["date"] = (datetime.strptime(data["date"], "%A, %m-%d-%Y") + timedelta(days=1)).strftime("%A, %m-%d-%Y")
-
-            for i in range(len(data["activity_list"])):
-                data["activity_list"][i]["total"] += data["activity_list"][i]["current_quantity"]
-                data["activity_list"][i]["historic_daily_scores"].append(data["activity_list"][i]["current_quantity"])
-                data["activity_list"][i]["days_tracked"] += 1
-                data["activity_list"][i]["current_quantity"] = 0
-                data["activity_list"][i]["historic_average_scores"].append(data["activity_list"][i]["total"] / data["activity_list"][i]["days_tracked"])
-
-            data["historic_scores"].append(data["score"])
-
-            f.seek(0)
-            data = json.dump(data, f, indent=4)
-            f.truncate()  
-
-            self.clearLayout()
-            self.buildLayout()
 
     def reset(self):
         dlg = QDialog(self)

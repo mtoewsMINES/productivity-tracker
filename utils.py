@@ -1,7 +1,7 @@
 import sys
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 
 #will find data file in: 
@@ -35,12 +35,29 @@ def resource_path(filename="data.json", app_name="Productivity Tracker"):
 
     return writable_file
 
+def newDay(data):
+    with open(resource_path('data.json'), 'r+') as f:
+
+        data["date"] = (datetime.strptime(data["date"], "%A, %m-%d-%Y") + timedelta(days=1)).strftime("%A, %m-%d-%Y")
+
+        for i in range(len(data["activity_list"])):
+            data["activity_list"][i]["total"] += data["activity_list"][i]["current_quantity"]
+            data["activity_list"][i]["historic_daily_scores"].append(data["activity_list"][i]["current_quantity"])
+            data["activity_list"][i]["days_tracked"] += 1
+            data["activity_list"][i]["current_quantity"] = 0
+            data["activity_list"][i]["historic_average_scores"].append(data["activity_list"][i]["total"] / data["activity_list"][i]["days_tracked"])
+
+        data["historic_scores"].append(data["score"]) 
+
+        print(data["date"])
+        return data["date"]
+
 def load_data(reset=False):
     with open(resource_path('data.json'), 'r+') as f:
+        current_date = datetime.today().strftime('%A, %m-%d-%Y')
         data = json.load(f)
 
-        if(reset or data == {}):
-            current_date = datetime.today().strftime('%A, %m-%d-%Y')
+        if reset or data == {}:
             data = {
                 "date": current_date,
                 "score": 0,
@@ -48,7 +65,11 @@ def load_data(reset=False):
                 "activity_list": [],
                 "start_date": current_date
             }
+        else:
+            tracked_date = data["date"]
+            while current_date != tracked_date and datetime.strptime(tracked_date, "%A, %m-%d-%Y") < datetime.strptime(current_date, "%A, %m-%d-%Y"):
+                tracked_date = newDay(data)
 
-            f.seek(0)
-            json.dump(data, f, indent=4)
-            f.truncate()
+        f.seek(0)
+        json.dump(data, f, indent=4)
+        f.truncate()
