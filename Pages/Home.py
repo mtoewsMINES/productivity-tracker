@@ -1,0 +1,257 @@
+from PyQt6.QtWidgets import (QWidget, QPushButton, 
+                             QVBoxLayout, QLabel, QGroupBox, QScrollArea,
+                             QLineEdit, QHBoxLayout, QComboBox, QFrame)
+from PyQt6.QtCore import Qt
+from Navigation.PageSelector import PageSelector
+import json
+from datetime import datetime
+from datetime import date, timedelta
+from utils import resource_path
+
+class Home(QWidget):
+    def __init__(self, mainWindow):
+        super().__init__()
+        self.mainWindow = mainWindow
+        self.setLayout(QVBoxLayout())
+        self.buildLayout()
+
+    def buildLayout(self):
+        #make sure we have correct score
+        self.updateScore()
+
+        with open(resource_path('data.json'), 'r') as f:
+            data = json.load(f)
+
+            #title
+            page_label = QLabel("Home")
+            page_label.setStyleSheet("font-size: 40px; font-weight: bold;")
+
+            #date label
+            date_label = QLabel(data["date"])
+            date_label.setStyleSheet("font-size: 15px")
+
+            #percentage
+            percent_label = QLabel(str(data["score"]) + "%")
+            if data["score"] < 40:
+                percent_label.setStyleSheet("font-size: 25px; font-weight:bold; border: 4px solid red")
+            elif data["score"] < 80:
+                percent_label.setStyleSheet("font-size: 25px; font-weight:bold; border: 4px solid yellow")
+            else:
+                percent_label.setStyleSheet("font-size: 25px; font-weight:bold; border: 4px solid green")
+
+            #activities
+            box = QFrame()
+            box.setFrameShape(QFrame.StyledPanel)
+            box.setFrameShadow(QFrame.Raised) 
+            box_layout = QVBoxLayout(box)
+            
+            activity_label = QLabel("Current Day")
+            activity_label.setStyleSheet("font-size: 20px; font-weight: bold")
+
+            activity_widgets = []
+            for activity in data["activity_list"]:
+                activity_widget = self.createActivityWidget(activity)
+                activity_widgets.append(activity_widget)
+
+            new_day_button = QPushButton("New Day")
+            new_day_button.clicked.connect(lambda : self.newDay())
+            new_day_button.setFixedSize(65, 30)
+
+            #report 
+            report_container = QWidget()
+            report_container.setLayout(QHBoxLayout())
+
+            report_label = QLabel("Report an Activity")
+            report_label.setStyleSheet("font-size: 20px; font-weight: bold")
+            report_dropdown = QComboBox()
+            for activity in data["activity_list"]:
+                report_dropdown.addItem(activity["name"])
+            report_quantity = QLineEdit()
+            report_quantity.setFixedSize(100, 32)
+
+            report_container.layout().addWidget(report_dropdown)
+            report_container.layout().addSpacing(50)
+            report_container.layout().addWidget(report_quantity)
+            report_container.layout().addSpacing(25)
+
+            report_button = QPushButton("Submit")
+            report_button.clicked.connect(lambda : self.reportActivity(report_container))
+            report_button.setFixedSize(55, 30)
+
+            #page selector
+            line = QFrame()
+            line.setFrameShape(QFrame.Shape.HLine)
+            line.setFrameShadow(QFrame.Shadow.Sunken)
+            page_selector = PageSelector(self.mainWindow, 0)
+
+            #assign layouts
+            layout = self.layout()
+            layout.addWidget(page_label, alignment=Qt.AlignTop | Qt.AlignCenter)
+
+            box_layout.addWidget(date_label, alignment=Qt.AlignCenter)
+            box_layout.addWidget(percent_label, alignment=Qt.AlignCenter)
+            box_layout.addSpacing(35)
+
+            box_layout.addWidget(activity_label, alignment=Qt.AlignCenter)
+
+            scroll = QScrollArea()
+            scroll.setWidgetResizable(True)
+            activity_container = QWidget()
+            activity_layout = QVBoxLayout(activity_container)
+            for widget in activity_widgets:
+                activity_layout.addWidget(widget)
+            scroll.setWidget(activity_container)
+            box_layout.addWidget(scroll)
+
+            box_layout.addWidget(new_day_button, alignment=Qt.AlignCenter)
+            box_layout.addStretch()
+
+            box_layout.addWidget(report_label, alignment=Qt.AlignCenter)
+            box_layout.addWidget(report_container)
+            box_layout.addWidget(report_button, alignment=Qt.AlignCenter)
+            box_layout.addStretch()
+
+            layout.addWidget(box)
+            layout.addWidget(line)
+            layout.addWidget(page_selector, alignment=Qt.AlignBottom) 
+
+    def clearLayout(self):
+        layout = self.layout()
+        while layout.count():
+            item = layout.takeAt(0)
+            w = item.widget()
+            if w:
+                w.deleteLater()
+
+    def createActivityWidget(self, activity):
+        activity_widget = QWidget()
+        activity_widget.setStyleSheet("border: 1px solid white")
+        activity_container = QHBoxLayout(activity_widget)
+        activity_container.setContentsMargins(4, 4, 4, 4)
+
+        check_text = "\u2714"
+        min_max_text = "+ "
+        if activity["min_max"] == "Maximize":
+            if activity["current_quantity"] < activity["target"]:
+                check_text = ""
+        else:
+            min_max_text = "- "
+            if activity["current_quantity"] > activity["target"]:
+                check_text = ""
+
+        activity_name = QLabel(min_max_text + activity["name"])
+        activity_name.setStyleSheet("font-size: 17px; border: none")
+        activity_quantity = QLabel(str(activity["current_quantity"]) + " / " + str(activity["target"]) + "    " + activity["units"])
+        activity_quantity.setStyleSheet("font-size: 17px; border: none")
+        activity_check = QLabel(check_text)
+        activity_check.setStyleSheet("font-size: 17px; border: none")
+
+        activity_container.addWidget(activity_name)
+        activity_container.addStretch()
+        activity_container.addWidget(activity_quantity)
+        activity_container.addStretch()
+        activity_container.addWidget(activity_check)
+        activity_widget.setFixedHeight(40)
+
+        return activity_widget
+
+    def newDay(self):
+        with open(resource_path('data.json'), 'r+') as f:
+            data = json.load(f)
+
+            data["date"] = (datetime.strptime(data["date"], "%A, %m-%d-%Y") + timedelta(days=1)).strftime("%A, %m-%d-%Y")
+
+            for i in range(len(data["activity_list"])):
+                data["activity_list"][i]["total"] += data["activity_list"][i]["current_quantity"]
+                data["activity_list"][i]["historic_daily_scores"].append(data["activity_list"][i]["current_quantity"])
+                data["activity_list"][i]["days_tracked"] += 1
+                data["activity_list"][i]["current_quantity"] = 0
+                data["activity_list"][i]["historic_average_scores"].append(data["activity_list"][i]["total"] / data["activity_list"][i]["days_tracked"])
+
+            data["historic_scores"].append(data["score"])
+
+            f.seek(0)
+            data = json.dump(data, f, indent=4)
+            f.truncate()  
+
+            self.clearLayout()
+            self.buildLayout()
+
+    def updateScore(self):
+        TOTAL_POINTS = 1000
+        FLEX = 0.35
+
+        with open(resource_path('data.json'), 'r+') as f:
+            data = json.load(f)
+
+            #sum diff
+            sum = 0
+            for activity in data["activity_list"]:
+                avg = activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
+                diff = 0 
+                if activity["min_max"] == "Maximize":
+                    diff = (activity["target"] - avg) / activity["target"] 
+                else:
+                    diff = (avg - activity["target"]) / activity["target"]
+                if diff > 0: sum += diff #positive diff means we have room for improvement
+
+            #point distribution
+            current_points = 0
+            for activity in data["activity_list"]:
+                possible_points = 0
+                if sum != 0:
+                    static_points = (1-FLEX) * TOTAL_POINTS / len(data["activity_list"])
+                    avg = activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
+                    diff = 0 
+                    if activity["min_max"] == "Maximize":
+                        diff = (activity["target"] - avg) / activity["target"] 
+                    else:
+                        diff = (avg - activity["target"]) / activity["target"]
+                    if diff < 0: diff = 0
+                    flex_points = FLEX * TOTAL_POINTS * diff / sum
+                    possible_points = static_points + flex_points
+                else: #uniform distribution
+                    possible_points = TOTAL_POINTS / len(data["activity_list"])
+                #calculate points
+                if activity["min_max"] == "Maximize":
+                    if activity["current_quantity"] <= activity["target"]:
+                        current_points += possible_points * activity["current_quantity"] / activity["target"] #linear growth
+                    else:
+                        current_points += possible_points * (activity["current_quantity"] / activity["target"])**0.5 #sqrt cramp
+                else:
+                    if activity["current_quantity"] <= activity["target"]:
+                        current_points += possible_points #flat line
+                    else:
+                        current_points += -(possible_points) * activity["current_quantity"] / activity["target"] + 2 * possible_points #linear decline
+
+            score = int(float(current_points) / TOTAL_POINTS * 100)
+            data["score"] = score
+
+            f.seek(0)
+            json.dump(data, f, indent=4)
+            f.truncate()
+
+    def reportActivity(self, report_container):
+        try:
+            name = report_container.children()[1].currentText()
+            quantity_text = report_container.children()[2].text()
+            quantity = float(quantity_text)
+            if '.' not in quantity_text:
+                quantity = int(quantity_text)
+        except Exception as e:
+            print(e)
+            return
+
+        with open(resource_path('data.json'), 'r+') as f:
+            data = json.load(f)
+
+            for i in range(len(data["activity_list"])):
+                if data["activity_list"][i]["name"] == name:
+                    data["activity_list"][i]["current_quantity"] += quantity
+            
+            f.seek(0)
+            json.dump(data, f, indent=4)
+            f.truncate()
+
+            self.clearLayout()
+            self.buildLayout()

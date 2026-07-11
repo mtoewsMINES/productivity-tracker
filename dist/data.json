@@ -1,0 +1,19 @@
+{
+    "date": "Sunday, 12-28-2025",
+    "score": 0,
+    "historic_scores": [],
+    "activity_list": [
+        {
+            "name": "Reading",
+            "units": "Pages",
+            "target": 20,
+            "min_max": "Maximize",
+            "current_quantity": 0,
+            "total": 0,
+            "start_date": "Sunday, 12-28-2025",
+            "days_tracked": 0,
+            "historic_data": []
+        }
+    ],
+    "start_date": "Sunday, 12-28-2025"
+}
