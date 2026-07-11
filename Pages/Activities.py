@@ -83,7 +83,7 @@ class Activities(QWidget):
 
         activity_name = QLabel(min_max_text + activity["name"])
         activity_name.setStyleSheet("font-size: 17px; border: none")
-        activity_quantity = QLabel(str(activity["target"]) + "  " + activity["units"])
+        activity_quantity = QLabel(f"{activity["target"]:.2f}  {activity["units"]} {activity["timeline"]}")
         activity_quantity.setStyleSheet("font-size: 17px; border: none")
         
         edit_button = QPushButton(qta.icon('fa5.edit'), "Edit")
@@ -123,15 +123,26 @@ class Activities(QWidget):
             new_units = QLineEdit()
             new_units.setMaximumHeight(35)
 
-            radio_layout = QHBoxLayout()
+            minmax_radio_layout = QHBoxLayout()
             maximize_button = QRadioButton("Maximize")
             maximize_button.setChecked(True)
             minimize_button = QRadioButton("Minimize")
-            radio_group = QButtonGroup()
-            radio_group.addButton(maximize_button)
-            radio_group.addButton(minimize_button)
-            radio_layout.addWidget(maximize_button)
-            radio_layout.addWidget(minimize_button)
+            minmax_radio_group = QButtonGroup()
+            minmax_radio_group.addButton(maximize_button)
+            minmax_radio_group.addButton(minimize_button)
+            minmax_radio_layout.addWidget(maximize_button)
+            minmax_radio_layout.addWidget(minimize_button)
+
+            timeline_radio_layout = QHBoxLayout()
+            daily_button = QRadioButton("Daily")
+            daily_button.setChecked(True)
+            weekly_button = QRadioButton("Weekly")
+            timeline_radio_group = QButtonGroup()
+            timeline_radio_group.addButton(daily_button)
+            timeline_radio_group.addButton(weekly_button)
+            timeline_radio_layout.addWidget(daily_button)
+            timeline_radio_layout.addWidget(weekly_button)
+
 
             dlg_grid.addWidget(dlg_name, 1, 1)
             dlg_grid.addWidget(new_name, 1, 2)
@@ -140,7 +151,8 @@ class Activities(QWidget):
             dlg_grid.addWidget(dlg_units, 3, 1)
             dlg_grid.addWidget(new_units, 3, 2)
             dlg_layout.addLayout(dlg_grid)
-            dlg_layout.addLayout(radio_layout)
+            dlg_layout.addLayout(minmax_radio_layout)
+            dlg_layout.addLayout(timeline_radio_layout)
             dlg_layout.addWidget(dlg.buttonBox)
             dlg.setLayout(dlg_layout)
             if not dlg.exec(): return
@@ -148,7 +160,7 @@ class Activities(QWidget):
             if new_name.text() == "": return
             try:
                 new_target_text = new_target_box.text()
-                new_target = float(new_target_text)
+                new_target = float(new_target_text) 
                 if '.' not in new_target_text:
                     new_target = int(new_target_text)
             except Exception as e:
@@ -159,8 +171,9 @@ class Activities(QWidget):
             activity = {
                 "name": new_name.text(),
                 "units": new_units.text(),
-                "target": new_target,
-                "min_max": radio_group.checkedButton().text(),
+                "timeline": timeline_radio_group.checkedButton().text(),
+                "target": new_target or 1,
+                "min_max": minmax_radio_group.checkedButton().text(),
                 "current_quantity": 0,
                 "total": 0,
                 "start_date": data["date"],
@@ -204,18 +217,31 @@ class Activities(QWidget):
                     new_units = QLineEdit(units)
                     new_units.setMaximumHeight(35)
 
-                    radio_layout = QHBoxLayout()
+                    minmax_radio_layout = QHBoxLayout()
                     maximize_button = QRadioButton("Maximize")
                     minimize_button = QRadioButton("Minimize")
                     if data["activity_list"][i]["min_max"] == "Maximize":
                         maximize_button.setChecked(True)
                     else:
                         minimize_button.setChecked(True)
-                    radio_group = QButtonGroup()
-                    radio_group.addButton(maximize_button)
-                    radio_group.addButton(minimize_button)
-                    radio_layout.addWidget(maximize_button)
-                    radio_layout.addWidget(minimize_button)
+                    minmax_radio_group = QButtonGroup()
+                    minmax_radio_group.addButton(maximize_button)
+                    minmax_radio_group.addButton(minimize_button)
+                    minmax_radio_layout.addWidget(maximize_button)
+                    minmax_radio_layout.addWidget(minimize_button)
+
+                    timeline_radio_layout = QHBoxLayout()
+                    daily_button = QRadioButton("Daily")
+                    weekly_button = QRadioButton("Weekly")
+                    if data["activity_list"][i]["timeline"] == "Daily":
+                        daily_button.setChecked(True)
+                    elif data["activity_list"][i]["timeline"] == "Weekly":
+                        weekly_button.setChecked(True)
+                    timeline_radio_group = QButtonGroup()
+                    timeline_radio_group.addButton(daily_button)
+                    timeline_radio_group.addButton(weekly_button)
+                    timeline_radio_layout.addWidget(daily_button)
+                    timeline_radio_layout.addWidget(weekly_button)
 
                     dlg_grid.addWidget(dlg_name, 1, 1)
                     dlg_grid.addWidget(new_name, 1, 2)
@@ -224,7 +250,8 @@ class Activities(QWidget):
                     dlg_grid.addWidget(dlg_units, 3, 1)
                     dlg_grid.addWidget(new_units, 3, 2)
                     dlg_layout.addLayout(dlg_grid)
-                    dlg_layout.addLayout(radio_layout)
+                    dlg_layout.addLayout(minmax_radio_layout)
+                    dlg_layout.addLayout(timeline_radio_layout)
 
                     dlg_layout.addWidget(dlg.buttonBox)
                     dlg.setLayout(dlg_layout)
@@ -236,14 +263,15 @@ class Activities(QWidget):
                     if new_units_text == "": new_units_text = data["activity_list"][i]["units"]
                     data["activity_list"][i]["name"] = new_name_text
                     data["activity_list"][i]["units"] = new_units_text
-                    data["activity_list"][i]["min_max"] = radio_group.checkedButton().text()
+                    data["activity_list"][i]["min_max"] = minmax_radio_group.checkedButton().text()
+                    data["activity_list"][i]["timeline"] = timeline_radio_group.checkedButton().text()
 
                     new_target_text = new_target_box.text()
                     try:
                         new_target = float(new_target_text)
                         if '.' not in new_target_text:
                             new_target = int(new_target_text)
-                        data["activity_list"][i]["target"] = new_target
+                        data["activity_list"][i]["target"] = new_target or 1
                     except Exception as e:
                         print(e)
                         pass

@@ -126,19 +126,21 @@ class Home(QWidget):
         activity_container = QHBoxLayout(activity_widget)
         activity_container.setContentsMargins(4, 4, 4, 4)
 
+        daily_target = activity["target"] / (1 if activity["timeline"] == "Daily" else 7)
+
         check_text = "\u2714"
         min_max_text = "+ "
         if activity["min_max"] == "Maximize":
-            if activity["current_quantity"] < activity["target"]:
+            if activity["current_quantity"] < daily_target:
                 check_text = ""
         else:
             min_max_text = "- "
-            if activity["current_quantity"] > activity["target"]:
+            if activity["current_quantity"] > daily_target:
                 check_text = ""
 
         activity_name = QLabel(min_max_text + activity["name"])
         activity_name.setStyleSheet("font-size: 17px; border: none")
-        activity_quantity = QLabel(str(activity["current_quantity"]) + " / " + str(activity["target"]) + "    " + activity["units"])
+        activity_quantity = QLabel(f"{activity["current_quantity"]:.2f} / {daily_target:.2f}    {activity["units"]}")
         activity_quantity.setStyleSheet("font-size: 17px; border: none")
         activity_check = QLabel(check_text)
         activity_check.setStyleSheet("font-size: 17px; border: none")
@@ -180,11 +182,12 @@ class Home(QWidget):
             sum = 0
             for activity in data["activity_list"]:
                 avg = activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
+                daily_target = activity["target"] / (1 if activity["timeline"] == "Daily" else 7)
                 diff = 0 
                 if activity["min_max"] == "Maximize":
-                    diff = (activity["target"] - avg) / activity["target"] 
+                    diff = (daily_target - avg) / daily_target
                 else:
-                    diff = (avg - activity["target"]) / activity["target"]
+                    diff = (avg - daily_target) / daily_target
                 if diff > 0: sum += diff #positive diff means we have room for improvement
 
             #point distribution
@@ -196,9 +199,9 @@ class Home(QWidget):
                     avg = activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
                     diff = 0 
                     if activity["min_max"] == "Maximize":
-                        diff = (activity["target"] - avg) / activity["target"] 
+                        diff = (daily_target - avg) / daily_target
                     else:
-                        diff = (avg - activity["target"]) / activity["target"]
+                        diff = (avg - daily_target) / daily_target
                     if diff < 0: diff = 0
                     flex_points = FLEX * TOTAL_POINTS * diff / sum
                     possible_points = static_points + flex_points
@@ -206,15 +209,15 @@ class Home(QWidget):
                     possible_points = TOTAL_POINTS / len(data["activity_list"])
                 #calculate points
                 if activity["min_max"] == "Maximize":
-                    if activity["current_quantity"] <= activity["target"]:
-                        current_points += possible_points * activity["current_quantity"] / activity["target"] #linear growth
+                    if activity["current_quantity"] <= daily_target:
+                        current_points += possible_points * activity["current_quantity"] / daily_target #linear growth
                     else:
-                        current_points += possible_points * (activity["current_quantity"] / activity["target"])**0.5 #sqrt cramp
+                        current_points += possible_points * (activity["current_quantity"] / daily_target)**0.5 #sqrt cramp
                 else:
-                    if activity["current_quantity"] <= activity["target"]:
+                    if activity["current_quantity"] <= daily_target:
                         current_points += possible_points #flat line
                     else:
-                        current_points += -(possible_points) * activity["current_quantity"] / activity["target"] + 2 * possible_points #linear decline
+                        current_points += -(possible_points) * activity["current_quantity"] / daily_target + 2 * possible_points #linear decline
 
             score = int(float(current_points) / TOTAL_POINTS * 100)
             data["score"] = score
