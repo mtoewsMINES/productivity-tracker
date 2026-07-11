@@ -51,7 +51,8 @@ class Stats(QWidget):
 
             fig = Figure()
             ax = fig.add_subplot()
-            avg_handle, = ax.plot(dates, data["historic_scores"], label="Daily")
+            ax.plot(dates, data["historic_scores"], label="Daily")
+            ax.plot(dates, data["historic_averages"], label="Average")
             ax.axhline(y=100, color='red', linestyle='--', linewidth=2, label='Target')
             ax.legend(
                 loc="upper left",
@@ -173,8 +174,8 @@ class Stats(QWidget):
 
         fig = Figure()
         ax = fig.add_subplot()
-        avg_handle, = ax.plot(x, activity["historic_average_scores"], label="Average")
-        daily_handle, = ax.plot(x, activity["historic_daily_scores"], label="Daily")
+        ax.plot(x, activity["historic_daily_scores"], label="Daily")
+        ax.plot(x, activity["historic_average_scores"], label="Average")
         ax.axhline(y=activity["target"], color='red', linestyle='--', linewidth=2, label='Target')
         ax.legend(
             loc="upper left",

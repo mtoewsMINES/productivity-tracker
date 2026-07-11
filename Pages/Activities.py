@@ -148,6 +148,7 @@ class Activities(QWidget):
             timeline_radio_layout.addWidget(longterm_button)
 
             self.calendar = QCalendarWidget()
+            self.calendar.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
             self.calendar.setGridVisible(True)
             self.calendar.hide()
             longterm_button.toggled.connect(self.toggle_calendar_visibility)
@@ -244,6 +245,12 @@ class Activities(QWidget):
                     minmax_radio_layout.addWidget(maximize_button)
                     minmax_radio_layout.addWidget(minimize_button)
 
+                    self.calendar = QCalendarWidget()
+                    self.calendar.setVerticalHeaderFormat(QCalendarWidget.NoVerticalHeader)
+                    self.calendar.setGridVisible(True)
+                    self.calendar.hide()
+                    self.calendar.setSelectedDate(datetime.strptime(data["activity_list"][i]["due_date"], "%A, %m-%d-%Y"))
+
                     timeline_radio_layout = QHBoxLayout()
                     daily_button = QRadioButton("Daily")
                     weekly_button = QRadioButton("Weekly")
@@ -254,6 +261,7 @@ class Activities(QWidget):
                         weekly_button.setChecked(True)
                     else:
                         longterm_button.setChecked(True)
+                        self.calendar.show()
                     timeline_radio_group = QButtonGroup()
                     timeline_radio_group.addButton(daily_button)
                     timeline_radio_group.addButton(weekly_button)
@@ -262,9 +270,6 @@ class Activities(QWidget):
                     timeline_radio_layout.addWidget(weekly_button)
                     timeline_radio_layout.addWidget(longterm_button)
 
-                    self.calendar = QCalendarWidget()
-                    self.calendar.setGridVisible(True)
-                    self.calendar.hide()
                     longterm_button.toggled.connect(self.toggle_calendar_visibility)
 
                     dlg_grid.addWidget(dlg_name, 1, 1)

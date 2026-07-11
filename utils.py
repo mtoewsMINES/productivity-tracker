@@ -38,8 +38,6 @@ def resource_path(filename="data.json", app_name="Productivity Tracker"):
 def newDay(data):
     with open(resource_path('data.json'), 'r+') as f:
 
-        data["date"] = (datetime.strptime(data["date"], "%A, %m-%d-%Y") + timedelta(days=1)).strftime("%A, %m-%d-%Y")
-
         for i in range(len(data["activity_list"])):
             data["activity_list"][i]["total"] += data["activity_list"][i]["current_quantity"]
             data["activity_list"][i]["historic_daily_scores"].append(data["activity_list"][i]["current_quantity"])
@@ -48,8 +46,10 @@ def newDay(data):
             data["activity_list"][i]["historic_average_scores"].append(data["activity_list"][i]["total"] / data["activity_list"][i]["days_tracked"])
 
         data["historic_scores"].append(data["score"]) 
+        days_tracked = (datetime.strptime(data["date"]) - datetime.strptime(data["start_date"])).days
+        data["historic_averages"].append(sum(data["historic_scores"]) / days_tracked)
+        data["date"] = (datetime.strptime(data["date"], "%A, %m-%d-%Y") + timedelta(days=1)).strftime("%A, %m-%d-%Y")
 
-        print(data["date"])
         return data["date"]
 
 def load_data(reset=False):
@@ -62,6 +62,7 @@ def load_data(reset=False):
                 "date": current_date,
                 "score": 0,
                 "historic_scores": [],
+                "historic_averages": [],
                 "activity_list": [],
                 "start_date": current_date
             }
