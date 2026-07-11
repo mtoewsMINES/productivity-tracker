@@ -1,11 +1,12 @@
 from PyQt6.QtWidgets import (QWidget, QPushButton, QScrollArea,
                              QVBoxLayout, QLabel, QRadioButton, QButtonGroup,
-                             QHBoxLayout, QDialog, QDialogButtonBox, QGridLayout, QFrame, QLineEdit)
+                             QHBoxLayout, QDialog, QDialogButtonBox, QGridLayout, QFrame, QLineEdit, QCalendarWidget)
 from PyQt6.QtCore import Qt
 from Navigation.PageSelector import PageSelector
 import qtawesome as qta
 import json
 from utils import resource_path
+from datetime import datetime
 
 class Activities(QWidget):
     def __init__(self, mainWindow):
@@ -103,13 +104,13 @@ class Activities(QWidget):
 
     def addActivity(self):
         with open(resource_path('data.json'), 'r+') as f:
-            dlg = QDialog(self)
-            dlg.setWindowTitle("Add an Activity")
-            dlg.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-            dlg.buttonBox.accepted.connect(dlg.accept)
-            dlg.buttonBox.button(QDialogButtonBox.Ok).setDefault(True)
-            dlg.buttonBox.button(QDialogButtonBox.Ok).setAutoDefault(True)
-            dlg.buttonBox.rejected.connect(dlg.reject)
+            self.dlg = QDialog(self)
+            self.dlg.setWindowTitle("Add an Activity")
+            self.dlg.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+            self.dlg.buttonBox.accepted.connect(self.dlg.accept)
+            self.dlg.buttonBox.button(QDialogButtonBox.Ok).setDefault(True)
+            self.dlg.buttonBox.button(QDialogButtonBox.Ok).setAutoDefault(True)
+            self.dlg.buttonBox.rejected.connect(self.dlg.reject)
             dlg_layout = QVBoxLayout()
             
             dlg_grid = QGridLayout()
@@ -137,12 +138,19 @@ class Activities(QWidget):
             daily_button = QRadioButton("Daily")
             daily_button.setChecked(True)
             weekly_button = QRadioButton("Weekly")
+            longterm_button = QRadioButton("By Date")
             timeline_radio_group = QButtonGroup()
             timeline_radio_group.addButton(daily_button)
             timeline_radio_group.addButton(weekly_button)
+            timeline_radio_group.addButton(longterm_button)
             timeline_radio_layout.addWidget(daily_button)
             timeline_radio_layout.addWidget(weekly_button)
+            timeline_radio_layout.addWidget(longterm_button)
 
+            self.calendar = QCalendarWidget()
+            self.calendar.setGridVisible(True)
+            self.calendar.hide()
+            longterm_button.toggled.connect(self.toggle_calendar_visibility)
 
             dlg_grid.addWidget(dlg_name, 1, 1)
             dlg_grid.addWidget(new_name, 1, 2)
@@ -153,9 +161,10 @@ class Activities(QWidget):
             dlg_layout.addLayout(dlg_grid)
             dlg_layout.addLayout(minmax_radio_layout)
             dlg_layout.addLayout(timeline_radio_layout)
-            dlg_layout.addWidget(dlg.buttonBox)
-            dlg.setLayout(dlg_layout)
-            if not dlg.exec(): return
+            dlg_layout.addWidget(self.calendar)
+            dlg_layout.addWidget(self.dlg.buttonBox)
+            self.dlg.setLayout(dlg_layout)
+            if not self.dlg.exec(): return
 
             if new_name.text() == "": return
             try:
@@ -178,6 +187,7 @@ class Activities(QWidget):
                 "total": 0,
                 "start_date": data["date"],
                 "days_tracked": 0,
+                "due_date": self.calendar.selectedDate().toString('dddd, MM-dd-yyyy'),
                 "historic_average_scores": [],
                 "historic_daily_scores": []
             }
@@ -190,6 +200,10 @@ class Activities(QWidget):
             self.clearLayout()
             self.buildLayout()
 
+    def toggle_calendar_visibility(self, checked):
+        self.calendar.setVisible(checked)
+        self.dlg.adjustSize()
+
     def editClicked(self, activity_widget):
         name = activity_widget.children()[1].text().split()[1]
         with open(resource_path('data.json'), 'r+') as f:
@@ -199,11 +213,11 @@ class Activities(QWidget):
                     quantity = str(data["activity_list"][i]["target"])
                     units = data["activity_list"][i]["units"]
 
-                    dlg = QDialog(self)
-                    dlg.setWindowTitle("Edit Activity")
-                    dlg.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
-                    dlg.buttonBox.accepted.connect(dlg.accept)
-                    dlg.buttonBox.rejected.connect(dlg.reject)
+                    self.dlg = QDialog(self)
+                    self.dlg.setWindowTitle("Edit Activity")
+                    self.dlg.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+                    self.dlg.buttonBox.accepted.connect(self.dlg.accept)
+                    self.dlg.buttonBox.rejected.connect(self.dlg.reject)
                     dlg_layout = QVBoxLayout()
                     
                     dlg_grid = QGridLayout()
@@ -233,15 +247,25 @@ class Activities(QWidget):
                     timeline_radio_layout = QHBoxLayout()
                     daily_button = QRadioButton("Daily")
                     weekly_button = QRadioButton("Weekly")
+                    longterm_button = QRadioButton("By Date")
                     if data["activity_list"][i]["timeline"] == "Daily":
                         daily_button.setChecked(True)
                     elif data["activity_list"][i]["timeline"] == "Weekly":
                         weekly_button.setChecked(True)
+                    else:
+                        longterm_button.setChecked(True)
                     timeline_radio_group = QButtonGroup()
                     timeline_radio_group.addButton(daily_button)
                     timeline_radio_group.addButton(weekly_button)
+                    timeline_radio_group.addButton(longterm_button)
                     timeline_radio_layout.addWidget(daily_button)
                     timeline_radio_layout.addWidget(weekly_button)
+                    timeline_radio_layout.addWidget(longterm_button)
+
+                    self.calendar = QCalendarWidget()
+                    self.calendar.setGridVisible(True)
+                    self.calendar.hide()
+                    longterm_button.toggled.connect(self.toggle_calendar_visibility)
 
                     dlg_grid.addWidget(dlg_name, 1, 1)
                     dlg_grid.addWidget(new_name, 1, 2)
@@ -252,10 +276,11 @@ class Activities(QWidget):
                     dlg_layout.addLayout(dlg_grid)
                     dlg_layout.addLayout(minmax_radio_layout)
                     dlg_layout.addLayout(timeline_radio_layout)
+                    dlg_layout.addWidget(self.calendar)
 
-                    dlg_layout.addWidget(dlg.buttonBox)
-                    dlg.setLayout(dlg_layout)
-                    if not dlg.exec(): return
+                    dlg_layout.addWidget(self.dlg.buttonBox)
+                    self.dlg.setLayout(dlg_layout)
+                    if not self.dlg.exec(): return
 
                     new_name_text = new_name.text()
                     new_units_text = new_units.text()
@@ -265,6 +290,7 @@ class Activities(QWidget):
                     data["activity_list"][i]["units"] = new_units_text
                     data["activity_list"][i]["min_max"] = minmax_radio_group.checkedButton().text()
                     data["activity_list"][i]["timeline"] = timeline_radio_group.checkedButton().text()
+                    data["activity_list"][i]["due_date"] = self.calendar.selectedDate().toString('dddd, MM-dd-yyyy')
 
                     new_target_text = new_target_box.text()
                     try:

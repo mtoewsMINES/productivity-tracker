@@ -128,6 +128,15 @@ class Home(QWidget):
 
         daily_target = activity["target"] / (1 if activity["timeline"] == "Daily" else 7)
 
+        daily_target = activity["target"]
+        if activity["timeline"] == "Weekly":
+            daily_target = activity["target"] / 7
+        elif activity["timeline"] == "By Date":
+            current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
+            due_date = datetime.strptime(activity["due_date"], "%A, %m-%d-%Y")
+            days_left = (due_date - current_date).days + 1
+            daily_target = activity["target"] / days_left
+
         check_text = "\u2714"
         min_max_text = "+ "
         if activity["min_max"] == "Maximize":
@@ -181,8 +190,21 @@ class Home(QWidget):
             #sum diff
             sum = 0
             for activity in data["activity_list"]:
-                avg = activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
-                daily_target = activity["target"] / (1 if activity["timeline"] == "Daily" else 7)
+                daily_total = activity["total"]
+                if activity["timeline"] == "By Date":
+                    daily_total = activity["target"] - activity["total"]
+
+                avg = daily_total / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
+                
+                daily_target = activity["target"]
+                if activity["timeline"] == "Weekly":
+                    daily_target = activity["target"] / 7
+                elif activity["timeline"] == "By Date":
+                    current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
+                    due_date = datetime.strptime(activity["due_date"], "%A, %m-%d-%Y")
+                    days_left = (due_date - current_date).days + 1
+                    daily_target = activity["target"] / days_left
+
                 diff = 0 
                 if activity["min_max"] == "Maximize":
                     diff = (daily_target - avg) / daily_target
@@ -194,9 +216,23 @@ class Home(QWidget):
             current_points = 0
             for activity in data["activity_list"]:
                 possible_points = 0
+
+                daily_total = activity["total"]
+                if activity["timeline"] == "By Date":
+                    daily_total = activity["target"] - activity["total"]
+                
+                daily_target = activity["target"]
+                if activity["timeline"] == "Weekly":
+                    daily_target = activity["target"] / 7
+                elif activity["timeline"] == "By Date":
+                    current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
+                    due_date = datetime.strptime(activity["due_date"], "%A, %m-%d-%Y")
+                    days_left = (due_date - current_date).days + 1
+                    daily_target = activity["target"] / days_left
+
                 if sum != 0:
                     static_points = (1-FLEX) * TOTAL_POINTS / len(data["activity_list"])
-                    avg = activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
+                    avg = daily_total / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
                     diff = 0 
                     if activity["min_max"] == "Maximize":
                         diff = (daily_target - avg) / daily_target
