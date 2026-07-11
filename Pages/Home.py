@@ -1,12 +1,12 @@
 from PyQt6.QtWidgets import (QWidget, QPushButton, 
                              QVBoxLayout, QLabel, QGroupBox, QScrollArea,
-                             QLineEdit, QHBoxLayout, QComboBox, QFrame)
+                             QLineEdit, QHBoxLayout, QComboBox, QFrame, QDialog, QDialogButtonBox)
 from PyQt6.QtCore import Qt
 from Navigation.PageSelector import PageSelector
 import json
 from datetime import datetime
 from datetime import date, timedelta
-from utils import resource_path
+from utils import resource_path, load_data
 
 class Home(QWidget):
     def __init__(self, mainWindow):
@@ -25,6 +25,12 @@ class Home(QWidget):
             #title
             page_label = QLabel("Home")
             page_label.setStyleSheet("font-size: 40px; font-weight: bold;")
+
+            #reset button
+            reset_button = QPushButton("Reset")
+            reset_button.clicked.connect(lambda : self.reset())
+            reset_button.setFixedSize(65, 30)
+            reset_button.setStyleSheet("font-size: 15px; font-weight: bold; background-color: red")
 
             #date label
             date_label = QLabel(data["date"])
@@ -82,6 +88,7 @@ class Home(QWidget):
 
             #assign layouts
             layout = self.layout()
+            layout.addWidget(reset_button, alignment=Qt.AlignTop | Qt.AlignRight)
             layout.addWidget(page_label, alignment=Qt.AlignTop | Qt.AlignCenter)
 
             box_layout.addWidget(date_label, alignment=Qt.AlignCenter)
@@ -172,6 +179,23 @@ class Home(QWidget):
 
             self.clearLayout()
             self.buildLayout()
+
+    def reset(self):
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Reset History")
+        dlg.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        dlg.buttonBox.accepted.connect(dlg.accept)
+        dlg.buttonBox.rejected.connect(dlg.reject)
+        dlg_layout = QVBoxLayout()
+        dlg_message = QLabel("Are you sure you want to reset your history?")
+        dlg_layout.addWidget(dlg_message)
+        dlg_layout.addWidget(dlg.buttonBox)
+        dlg.setLayout(dlg_layout)
+        if not dlg.exec(): return
+
+        load_data(reset=True)
+        self.clearLayout()
+        self.buildLayout()
 
     def updateScore(self):
         TOTAL_POINTS = 1000

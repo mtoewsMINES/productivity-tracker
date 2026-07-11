@@ -35,12 +35,12 @@ def resource_path(filename="data.json", app_name="Productivity Tracker"):
 
     return writable_file
 
-def load_data():
+def load_data(reset=False):
     with open(resource_path('data.json'), 'r+') as f:
         data = json.load(f)
 
-        if(data == {}):
-            current_date = datetime.today().strftime('%A, %m-%d-%y')
+        if(reset or data == {}):
+            current_date = datetime.today().strftime('%A, %m-%d-%Y')
             data = {
                 "date": current_date,
                 "score": 0,
