@@ -130,7 +130,8 @@ class Home(QWidget):
 
         daily_target = activity["target"]
         if activity["timeline"] == "Weekly":
-            daily_target = activity["target"] / 7
+            current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
+            daily_target = activity["target"] / (7 - current_date.weekday())
         elif activity["timeline"] == "By Date":
             current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
             due_date = datetime.strptime(activity["due_date"], "%A, %m-%d-%Y")
@@ -198,7 +199,8 @@ class Home(QWidget):
                 
                 daily_target = activity["target"]
                 if activity["timeline"] == "Weekly":
-                    daily_target = activity["target"] / 7
+                    current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
+                    daily_target = activity["target"] / (7 - current_date.weekday())
                 elif activity["timeline"] == "By Date":
                     current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
                     due_date = datetime.strptime(activity["due_date"], "%A, %m-%d-%Y")
@@ -223,7 +225,8 @@ class Home(QWidget):
                 
                 daily_target = activity["target"]
                 if activity["timeline"] == "Weekly":
-                    daily_target = activity["target"] / 7
+                    current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
+                    daily_target = activity["target"] / (7 - current_date.weekday())
                 elif activity["timeline"] == "By Date":
                     current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
                     due_date = datetime.strptime(activity["due_date"], "%A, %m-%d-%Y")
