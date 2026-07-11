@@ -32,12 +32,8 @@ class Home(QWidget):
 
             #percentage
             percent_label = QLabel(str(data["score"]) + "%")
-            if data["score"] < 40:
-                percent_label.setStyleSheet("font-size: 25px; font-weight:bold; border: 4px solid red")
-            elif data["score"] < 80:
-                percent_label.setStyleSheet("font-size: 25px; font-weight:bold; border: 4px solid yellow")
-            else:
-                percent_label.setStyleSheet("font-size: 25px; font-weight:bold; border: 4px solid green")
+            color = "red" if data["score"] < 40 else "yellow" if data["score"] < 80 else "green"
+            percent_label.setStyleSheet(f"font-size: 25px; font-weight: bold; border: 4px solid {color}")
 
             #activities
             box = QFrame()

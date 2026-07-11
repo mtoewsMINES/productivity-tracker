@@ -1,6 +1,8 @@
 import sys
 import os
 import shutil
+from datetime import datetime
+import json
 
 #will find data file in: 
 #C:\Users\<your-username>\AppData\Local\ProductivityTracker\data.json
@@ -32,3 +34,21 @@ def resource_path(filename="data.json", app_name="Productivity Tracker"):
         shutil.copy(bundled_file, writable_file)
 
     return writable_file
+
+def load_data():
+    with open(resource_path('data.json'), 'r+') as f:
+        data = json.load(f)
+
+        if(data == {}):
+            current_date = datetime.today().strftime('%A, %m-%d-%y')
+            data = {
+                "date": current_date,
+                "score": 0,
+                "historic_scores": [],
+                "activity_list": [],
+                "start_date": current_date
+            }
+
+            f.seek(0)
+            json.dump(data, f, indent=4)
+            f.truncate()

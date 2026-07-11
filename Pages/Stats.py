@@ -151,7 +151,7 @@ class Stats(QWidget):
         activity_total = QLabel(str(activity["total"]))
         activity_total.setStyleSheet("font-size: 17px; border: none")
         avg = activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
-        activity_quantity = QLabel(f"{avg:.2f} / {activity["target"]}")
+        activity_quantity = QLabel(f"{(avg / activity["target"]):.2f}")
         activity_quantity.setStyleSheet("font-size: 17px; border: none")
         activity_check = QLabel(check_text)
         activity_check.setStyleSheet("font-size: 17px; border: none")
