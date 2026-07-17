@@ -175,7 +175,8 @@ class Stats(QWidget):
         fig = Figure()
         ax = fig.add_subplot()
         ax.plot(x, activity["historic_daily_scores"], label="Daily")
-        ax.plot(x, activity["historic_average_scores"], label="Average")
+        if activity["timeline"] != "By Date":
+            ax.plot(x, activity["historic_average_scores"], label="Average")
         ax.axhline(y=activity["target"], color='red', linestyle='--', linewidth=2, label='Target')
         ax.legend(
             loc="upper left",
