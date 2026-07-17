@@ -127,17 +127,15 @@ class Home(QWidget):
         activity_container = QHBoxLayout(activity_widget)
         activity_container.setContentsMargins(4, 4, 4, 4)
 
-        daily_target = activity["target"] / (1 if activity["timeline"] == "Daily" else 7)
-
         daily_target = activity["target"]
         if activity["timeline"] == "Weekly":
             current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
-            daily_target = activity["target"] / (7 - current_date.weekday())
+            daily_target = (activity["target"] - activity["weekly_total"]) / (7 - current_date.weekday())
         elif activity["timeline"] == "By Date":
             current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
             due_date = datetime.strptime(activity["due_date"], "%A, %m-%d-%Y")
             days_left = (due_date - current_date).days + 1
-            daily_target = activity["target"] / days_left
+            daily_target = (activity["target"] - activity["total"]) / days_left
 
         check_text = "\u2714"
         min_max_text = "+ "
@@ -194,20 +192,22 @@ class Home(QWidget):
             sum = 0
             for activity in activeActivities:
                 daily_total = activity["total"]
-                if activity["timeline"] == "By Date":
-                    daily_total = activity["target"] - activity["total"]
-
-                avg = daily_total / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
                 
                 daily_target = activity["target"]
                 if activity["timeline"] == "Weekly":
+                    daily_total = daily_total / 7
                     current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
-                    daily_target = activity["target"] / (7 - current_date.weekday())
+                    daily_target = (activity["target"] - activity["weekly_total"]) / (7 - current_date.weekday())
                 elif activity["timeline"] == "By Date":
                     current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
                     due_date = datetime.strptime(activity["due_date"], "%A, %m-%d-%Y")
+                    start_date= datetime.strptime(activity["start_date"], "%A, %m-%d-%Y")
+                    total_days = (due_date - start_date).days + 1
                     days_left = (due_date - current_date).days + 1
-                    daily_target = activity["target"] / days_left
+                    daily_total = daily_total / total_days
+                    daily_target = (activity["target"] - activity["total"]) / days_left
+
+                avg = daily_total / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
 
                 diff = 0 
                 if activity["min_max"] == "Maximize":
@@ -222,18 +222,20 @@ class Home(QWidget):
                 possible_points = 0
 
                 daily_total = activity["total"]
-                if activity["timeline"] == "By Date":
-                    daily_total = activity["target"] - activity["total"]
                 
                 daily_target = activity["target"]
                 if activity["timeline"] == "Weekly":
+                    daily_total = daily_total / 7
                     current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
-                    daily_target = activity["target"] / (7 - current_date.weekday())
+                    daily_target = (activity["target"] - activity["weekly_total"]) / (7 - current_date.weekday())
                 elif activity["timeline"] == "By Date":
                     current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
                     due_date = datetime.strptime(activity["due_date"], "%A, %m-%d-%Y")
+                    start_date= datetime.strptime(activity["start_date"], "%A, %m-%d-%Y")
+                    total_days = (due_date - start_date).days + 1
                     days_left = (due_date - current_date).days + 1
-                    daily_target = activity["target"] / days_left
+                    daily_total = daily_total / total_days
+                    daily_target = (activity["target"] - activity["total"]) / days_left
 
                 if sum != 0:
                     static_points = (1-FLEX) * TOTAL_POINTS / len(activeActivities)

@@ -38,21 +38,26 @@ def resource_path(filename="data.json", app_name="Productivity Tracker"):
 def newDay(data):
     with open(resource_path('data.json'), 'r+') as f:
 
+        #update activities
         for i in range(len(data["activity_list"])):
             data["activity_list"][i]["total"] += data["activity_list"][i]["current_quantity"]
+            if data["date"].split(",")[0] == "Sunday":
+                data["activity_list"][i]["weekly_total"] = 0
+            else:
+                data["activity_list"][i]["weekly_total"] += data["activity_list"][i]["current_quantity"]
             data["activity_list"][i]["current_quantity"] = 0
             
-            if data["activity_list"][i]["timeline"] == "By Date":
+            if data["activity_list"][i]["timeline"] == "By Date": #daily scores are summative, and we don't track historical data
                 if datetime.strptime(data["activity_list"][i]["due_date"], "%A, %m-%d-%Y") <= datetime.strptime(data["date"], "%A, %m-%d-%Y"): 
-                    data["activity_list"][i]["active"] = False
+                    data["activity_list"][i]["active"] = False #deprecate old longterm goals
                 data["activity_list"][i]["historic_daily_scores"].append(data["activity_list"][i]["current_quantity"] 
                     + sum(data["activity_list"][i]["historic_daily_scores"]))
-            else:
+            else: #daily_scores are truly daily quantities
                 data["activity_list"][i]["days_tracked"] += 1
                 data["activity_list"][i]["historic_daily_scores"].append(data["activity_list"][i]["current_quantity"])
                 data["activity_list"][i]["historic_average_scores"].append(data["activity_list"][i]["total"] / data["activity_list"][i]["days_tracked"])
 
-
+        #update broader data
         data["historic_scores"].append(data["score"]) 
         days_tracked = (datetime.strptime(data["date"], "%A, %m-%d-%Y") - datetime.strptime(data["start_date"], "%A, %m-%d-%Y")).days
         data["historic_averages"].append(sum(data["historic_scores"]) / (days_tracked or 1))

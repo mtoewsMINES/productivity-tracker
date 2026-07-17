@@ -188,6 +188,7 @@ class Activities(QWidget):
                 "min_max": minmax_radio_group.checkedButton().text(),
                 "current_quantity": 0,
                 "total": 0,
+                "weekly_total": 0,
                 "start_date": data["date"],
                 "days_tracked": 0,
                 "due_date": self.calendar.selectedDate().toString('dddd, MM-dd-yyyy'),
