@@ -77,7 +77,7 @@ class Stats(QWidget):
             self.graphs.addWidget(score_graph)
 
             for activity in data["activity_list"]:
-                dates = [datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=i) for i in range(len(activity["historic_average_scores"]))]
+                dates = [datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=i) for i in range(len(activity["historic_daily_scores"]))]
                 activity_graph = self.createGraph(dates, activity)
                 self.graphs.addWidget(activity_graph)
 

@@ -40,15 +40,15 @@ def newDay(data):
 
         for i in range(len(data["activity_list"])):
             data["activity_list"][i]["total"] += data["activity_list"][i]["current_quantity"]
-            data["activity_list"][i]["days_tracked"] += 1
             data["activity_list"][i]["current_quantity"] = 0
             
             if data["activity_list"][i]["timeline"] == "By Date":
                 if datetime.strptime(data["activity_list"][i]["due_date"], "%A, %m-%d-%Y") <= datetime.strptime(data["date"], "%A, %m-%d-%Y"): 
                     data["activity_list"][i]["active"] = False
-                    data["activity_list"][i]["historic_daily_scores"].append(data["activity_list"][i]["current_quantity"] 
-                        + sum(data["activity_list"][i]["historic_daily_scores"]))
+                data["activity_list"][i]["historic_daily_scores"].append(data["activity_list"][i]["current_quantity"] 
+                    + sum(data["activity_list"][i]["historic_daily_scores"]))
             else:
+                data["activity_list"][i]["days_tracked"] += 1
                 data["activity_list"][i]["historic_daily_scores"].append(data["activity_list"][i]["current_quantity"])
                 data["activity_list"][i]["historic_average_scores"].append(data["activity_list"][i]["total"] / data["activity_list"][i]["days_tracked"])
 
