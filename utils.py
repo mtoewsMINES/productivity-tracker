@@ -44,10 +44,14 @@ def newDay(data):
             data["activity_list"][i]["days_tracked"] += 1
             data["activity_list"][i]["current_quantity"] = 0
             data["activity_list"][i]["historic_average_scores"].append(data["activity_list"][i]["total"] / data["activity_list"][i]["days_tracked"])
+            if (data["activity_list"][i]["timeline"] == "By Date" 
+            and datetime.strptime(data["activity_list"][i]["due_date"], "%A, %m-%d-%Y") <= datetime.strptime(data["date"], "%A, %m-%d-%Y")): 
+                data["activity_list"][i]["active"] = False
+
 
         data["historic_scores"].append(data["score"]) 
-        days_tracked = (datetime.strptime(data["date"]) - datetime.strptime(data["start_date"])).days
-        data["historic_averages"].append(sum(data["historic_scores"]) / days_tracked)
+        days_tracked = (datetime.strptime(data["date"], "%A, %m-%d-%Y") - datetime.strptime(data["start_date"], "%A, %m-%d-%Y")).days
+        data["historic_averages"].append(sum(data["historic_scores"]) / (days_tracked or 1))
         data["date"] = (datetime.strptime(data["date"], "%A, %m-%d-%Y") + timedelta(days=1)).strftime("%A, %m-%d-%Y")
 
         return data["date"]

@@ -89,6 +89,7 @@ class Activities(QWidget):
         
         edit_button = QPushButton(qta.icon('fa5.edit'), "Edit")
         edit_button.clicked.connect(lambda : self.editClicked(activity_widget))
+        edit_button.setEnabled(activity["active"])
         delete_button = QPushButton(qta.icon('fa5.trash-alt'), "Delete")
         delete_button.clicked.connect(lambda : self.deleteClicked(activity_widget))
         
@@ -180,6 +181,7 @@ class Activities(QWidget):
             data = json.load(f)
             activity = {
                 "name": new_name.text(),
+                "active": True,
                 "units": new_units.text(),
                 "timeline": timeline_radio_group.checkedButton().text(),
                 "target": new_target or 1,

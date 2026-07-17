@@ -21,6 +21,7 @@ class Home(QWidget):
 
         with open(resource_path('data.json'), 'r') as f:
             data = json.load(f)
+            activeActivities = [activity for activity in data["activity_list"] if activity["active"]]
 
             #title
             page_label = QLabel("Home")
@@ -51,7 +52,7 @@ class Home(QWidget):
             activity_label.setStyleSheet("font-size: 20px; font-weight: bold")
 
             activity_widgets = []
-            for activity in data["activity_list"]:
+            for activity in activeActivities:
                 activity_widget = self.createActivityWidget(activity)
                 activity_widgets.append(activity_widget)
 
@@ -62,7 +63,7 @@ class Home(QWidget):
             report_label = QLabel("Report an Activity")
             report_label.setStyleSheet("font-size: 20px; font-weight: bold")
             report_dropdown = QComboBox()
-            for activity in data["activity_list"]:
+            for activity in activeActivities:
                 report_dropdown.addItem(activity["name"])
             report_quantity = QLineEdit()
             report_quantity.setFixedSize(100, 32)
@@ -187,10 +188,11 @@ class Home(QWidget):
 
         with open(resource_path('data.json'), 'r+') as f:
             data = json.load(f)
+            activeActivities = [activity for activity in data["activity_list"] if activity["active"]]
 
             #sum diff
             sum = 0
-            for activity in data["activity_list"]:
+            for activity in activeActivities:
                 daily_total = activity["total"]
                 if activity["timeline"] == "By Date":
                     daily_total = activity["target"] - activity["total"]
@@ -216,7 +218,7 @@ class Home(QWidget):
 
             #point distribution
             current_points = 0
-            for activity in data["activity_list"]:
+            for activity in activeActivities:
                 possible_points = 0
 
                 daily_total = activity["total"]
@@ -234,7 +236,7 @@ class Home(QWidget):
                     daily_target = activity["target"] / days_left
 
                 if sum != 0:
-                    static_points = (1-FLEX) * TOTAL_POINTS / len(data["activity_list"])
+                    static_points = (1-FLEX) * TOTAL_POINTS / len(activeActivities)
                     avg = daily_total / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
                     diff = 0 
                     if activity["min_max"] == "Maximize":
@@ -245,7 +247,7 @@ class Home(QWidget):
                     flex_points = FLEX * TOTAL_POINTS * diff / sum
                     possible_points = static_points + flex_points
                 else: #uniform distribution
-                    possible_points = TOTAL_POINTS / len(data["activity_list"])
+                    possible_points = TOTAL_POINTS / len(activeActivities)
                 #calculate points
                 if activity["min_max"] == "Maximize":
                     if activity["current_quantity"] <= daily_target:
