@@ -32,7 +32,18 @@ class Home(QWidget):
             reset_button = QPushButton("Reset")
             reset_button.clicked.connect(lambda : self.reset())
             reset_button.setFixedSize(65, 30)
-            reset_button.setStyleSheet("font-size: 15px; font-weight: bold; background-color: red")
+            reset_button.setStyleSheet("""
+                QPushButton {
+                    font-size: 15px; 
+                    font-weight: bold; 
+                    background-color: red; 
+                }
+                QPushButton:hover {
+                    font-size: 15px;
+                    font-weight: bold;
+                    background-color: #fc4538; 
+                }
+            """)
 
             #date label
             date_label = QLabel(data["date"])
@@ -199,7 +210,7 @@ class Home(QWidget):
 
     def updateScore(self):
         TOTAL_POINTS = 1000
-        FLEX = 0.35
+        FLEX = 0.4
 
         with open(resource_path('data.json'), 'r+') as f:
             data = json.load(f)
@@ -210,7 +221,7 @@ class Home(QWidget):
             for activity in activeActivities:
                 avg = activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
                 if activity["timeline"] == "Weekly":
-                    avg /= activity["days_tracked"] / 7
+                    avg /= (activity["days_tracked"] or 1) / 7
                 diff = 0 
                 if activity["min_max"] == "Maximize":
                     diff = (activity["target"] - avg) / activity["target"] 
@@ -226,7 +237,7 @@ class Home(QWidget):
                     static_points = (1-FLEX) * TOTAL_POINTS / len(activeActivities)
                     avg = activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
                     if activity["timeline"] == "Weekly":
-                        avg /= activity["days_tracked"] / 7
+                        avg /= (activity["days_tracked"] or 1) / 7
                     diff = 0 
                     if activity["min_max"] == "Maximize":
                         diff = (activity["target"] - avg) / activity["target"] 
