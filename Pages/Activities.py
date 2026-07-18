@@ -209,7 +209,7 @@ class Activities(QWidget):
         self.dlg.adjustSize()
 
     def editClicked(self, activity_widget):
-        name = activity_widget.children()[1].text().split()[1]
+        name = activity_widget.children()[1].text()[2:]
         with open(resource_path('data.json'), 'r+') as f:
             data = json.load(f)
             for i in range(len(data["activity_list"])):
@@ -330,7 +330,7 @@ class Activities(QWidget):
         dlg.setLayout(dlg_layout)
         if not dlg.exec(): return
 
-        name = activity_widget.children()[1].text().split()[1]
+        name = activity_widget.children()[1].text()[2:]
         with open(resource_path('data.json'), 'r+') as f:
             data = json.load(f)
             for activity in data["activity_list"]:

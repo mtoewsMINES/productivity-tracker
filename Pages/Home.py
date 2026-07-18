@@ -138,7 +138,12 @@ class Home(QWidget):
             days_left = (due_date - current_date).days + 1
             daily_target = (activity["target"] - activity["total"]) / days_left
 
-        border_color = ("red" if activity["current_quantity"] / daily_target < 0.4 
+        border_color = "white"
+        if (activity["timeline"] == "Weekly" and activity["weekly_total"] >= activity["target"]
+        or activity["timeline"] == "By Date" and activity["total"] >= activity["target"]):
+            border_color = "green"
+        else:
+            border_color = ("red" if activity["current_quantity"] / daily_target < 0.4 
                         else "yellow" if activity["current_quantity"] / daily_target < 0.8 
                         else "green")
 
@@ -154,10 +159,13 @@ class Home(QWidget):
             border_color = ("green" if activity["current_quantity"] / daily_target < 0.4 
                         else "yellow" if activity["current_quantity"] / daily_target < 0.8
                         else "red")
+            if (activity["timeline"] == "Weekly" and activity["weekly_total"] <= activity["target"]
+            or activity["timeline"] == "By Date" and activity["total"] <= activity["target"]):
+                border_color = "green"
 
         activity_name = QLabel(min_max_text + activity["name"])
         activity_name.setStyleSheet("font-size: 17px; border: none")
-        activity_quantity = QLabel(f"{activity["current_quantity"]:.2f} / {daily_target:.2f}    {activity["units"]}")
+        activity_quantity = QLabel(f"{activity["current_quantity"]:.2f} / {max(daily_target, 0):.2f}    {activity["units"]}")
         activity_quantity.setStyleSheet("font-size: 17px; border: none")
         activity_check = QLabel(check_text)
         activity_check.setStyleSheet("font-size: 17px; border: none")
@@ -200,76 +208,64 @@ class Home(QWidget):
             #sum diff
             sum = 0
             for activity in activeActivities:
-                daily_total = activity["total"]
-                
-                daily_target = activity["target"]
+                avg = activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
                 if activity["timeline"] == "Weekly":
-                    daily_total = daily_total / 7
-                    current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
-                    daily_target = (activity["target"] - activity["weekly_total"]) / (7 - current_date.weekday())
-                elif activity["timeline"] == "By Date":
-                    current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
-                    due_date = datetime.strptime(activity["due_date"], "%A, %m-%d-%Y")
-                    start_date= datetime.strptime(activity["start_date"], "%A, %m-%d-%Y")
-                    total_days = (due_date - start_date).days + 1
-                    days_left = (due_date - current_date).days + 1
-                    daily_total = daily_total / total_days
-                    daily_target = (activity["target"] - activity["total"]) / days_left
-
-                avg = daily_total / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
-
+                    avg /= activity["days_tracked"] / 7
                 diff = 0 
                 if activity["min_max"] == "Maximize":
-                    diff = (daily_target - avg) / daily_target
+                    diff = (activity["target"] - avg) / activity["target"] 
                 else:
-                    diff = (avg - daily_target) / daily_target
+                    diff = (avg - activity["target"]) / activity["target"]
                 if diff > 0: sum += diff #positive diff means we have room for improvement
 
             #point distribution
             current_points = 0
             for activity in activeActivities:
                 possible_points = 0
-
-                daily_total = activity["total"]
-                
-                daily_target = activity["target"]
-                if activity["timeline"] == "Weekly":
-                    daily_total = daily_total / 7
-                    current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
-                    daily_target = (activity["target"] - activity["weekly_total"]) / (7 - current_date.weekday())
-                elif activity["timeline"] == "By Date":
-                    current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
-                    due_date = datetime.strptime(activity["due_date"], "%A, %m-%d-%Y")
-                    start_date= datetime.strptime(activity["start_date"], "%A, %m-%d-%Y")
-                    total_days = (due_date - start_date).days + 1
-                    days_left = (due_date - current_date).days + 1
-                    daily_total = daily_total / total_days
-                    daily_target = (activity["target"] - activity["total"]) / days_left
-
                 if sum != 0:
                     static_points = (1-FLEX) * TOTAL_POINTS / len(activeActivities)
-                    avg = daily_total / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
+                    avg = activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
+                    if activity["timeline"] == "Weekly":
+                        avg /= activity["days_tracked"] / 7
                     diff = 0 
                     if activity["min_max"] == "Maximize":
-                        diff = (daily_target - avg) / daily_target
+                        diff = (activity["target"] - avg) / activity["target"] 
                     else:
-                        diff = (avg - daily_target) / daily_target
+                        diff = (avg - activity["target"]) / activity["target"]
                     if diff < 0: diff = 0
                     flex_points = FLEX * TOTAL_POINTS * diff / sum
                     possible_points = static_points + flex_points
                 else: #uniform distribution
                     possible_points = TOTAL_POINTS / len(activeActivities)
                 #calculate points
+                target = activity["target"]
+                if activity["timeline"] == "Weekly":
+                    current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
+                    target = (activity["target"] - activity["weekly_total"]) / (7 - current_date.weekday())
+                    if target <= 0:
+                        target = activity["target"] / 7
+                        current_points += possible_points
+                if activity["timeline"] == "By Date":
+                    current_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y") + timedelta(days=activity["days_tracked"])
+                    due_date = datetime.strptime(activity["due_date"], "%A, %m-%d-%Y")
+                    start_date= datetime.strptime(activity["start_date"], "%A, %m-%d-%Y")
+                    days_left = (due_date - current_date).days + 1
+                    target = (activity["target"] - activity["total"]) / days_left
+                    if target <= 0:
+                        total_days = (due_date - start_date).days + 1
+                        target = activity["target"] / total_days
+                        current_points += possible_points
+
                 if activity["min_max"] == "Maximize":
-                    if activity["current_quantity"] <= daily_target:
-                        current_points += possible_points * activity["current_quantity"] / daily_target #linear growth
+                    if activity["current_quantity"] <= target:
+                        current_points += possible_points * activity["current_quantity"] / target #linear growth
                     else:
-                        current_points += possible_points * (activity["current_quantity"] / daily_target)**0.5 #sqrt cramp
+                        current_points += possible_points * (activity["current_quantity"] / target)**0.5 #sqrt cramp
                 else:
-                    if activity["current_quantity"] <= daily_target:
+                    if activity["current_quantity"] <= target:
                         current_points += possible_points #flat line
                     else:
-                        current_points += -(possible_points) * activity["current_quantity"] / daily_target + 2 * possible_points #linear decline
+                        current_points += -(possible_points) * activity["current_quantity"] / target + 2 * possible_points #linear decline
 
             score = int(float(current_points) / TOTAL_POINTS * 100)
             data["score"] = score
