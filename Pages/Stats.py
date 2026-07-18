@@ -137,21 +137,34 @@ class Stats(QWidget):
         activity_container = QHBoxLayout(activity_widget)
         activity_container.setContentsMargins(4, 4, 4, 4)
 
+        avg = activity["total"]
+        if activity["timeline"] == "Daily":
+            avg = avg / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
+        elif activity["timeline"] == "Weekly":
+            avg = avg / (activity["days_tracked"] / 7 if activity["days_tracked"] != 0 else 1)
+
+        border_color = ("red" if avg / activity["target"] < 0.4 
+                        else "yellow" if avg / activity["target"] < 0.8 
+                        else "green")
+        if activity["min_max"] == "Minimize":
+            border_color = ("green" if avg / activity["target"] < 0.4 
+                            else "yellow" if avg / activity["target"] < 0.8 
+                            else "red")
+
         check_text = "\u2714"
         min_max_text = "+ "
         if activity["min_max"] == "Maximize":
-            if activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1) < activity["target"]:
+            if avg < activity["target"]:
                 check_text = ""
         else:
             min_max_text = "- "
-            if activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1) > activity["target"]:
+            if avg > activity["target"]:
                 check_text = ""
 
         activity_name = QLabel(min_max_text + activity["name"])
         activity_name.setStyleSheet("font-size: 17px; border: none")
         activity_total = QLabel(str(activity["total"]))
         activity_total.setStyleSheet("font-size: 17px; border: none")
-        avg = activity["total"] / (activity["days_tracked"] if activity["days_tracked"] != 0 else 1)
         activity_quantity = QLabel(f"{avg:.2f} / {activity["target"]:.2f}")
         activity_quantity.setStyleSheet("font-size: 17px; border: none")
         activity_check = QLabel(check_text)
@@ -165,6 +178,7 @@ class Stats(QWidget):
         activity_container.addStretch()
         activity_container.addWidget(activity_check)
         activity_widget.setFixedHeight(40)
+        activity_widget.setStyleSheet(f"border: 1px solid {border_color}")
 
         return activity_widget
 
