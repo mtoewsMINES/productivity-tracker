@@ -7,6 +7,7 @@ import json
 from datetime import datetime
 from datetime import date, timedelta
 from utils import resource_path, load_data
+from PyQt6.QtGui import QKeySequence
 
 class Home(QWidget):
     def __init__(self, mainWindow):
@@ -76,6 +77,7 @@ class Home(QWidget):
             report_button = QPushButton("Submit")
             report_button.clicked.connect(lambda : self.reportActivity(report_container))
             report_button.setFixedSize(55, 30)
+            report_button.setShortcut(QKeySequence("Return"))
 
             #page selector
             line = QFrame()
