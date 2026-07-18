@@ -177,6 +177,23 @@ class Stats(QWidget):
         ax.plot(x, activity["historic_daily_scores"], label="Daily")
         if activity["timeline"] != "By Date":
             ax.plot(x, activity["historic_average_scores"], label="Average")
+
+        if activity["timeline"] == "Weekly":
+            start_date = datetime.strptime(activity["start_date"], "%A, %m-%d-%Y")
+            current_date = start_date + timedelta(days=activity["days_tracked"])
+            current_sunday = start_date + timedelta(days=6-start_date.weekday())
+
+            sundays = []
+            sunday_sums = []
+            while current_sunday <= current_date:
+                sundays.append(current_sunday)
+                index = (current_sunday - start_date).days + 1
+                sunday_sums.append(sum(activity["historic_daily_scores"][max(0, index - 7): min(index, len(activity["historic_daily_scores"]))]))
+                current_sunday += timedelta(days=7)
+
+            ax.plot(sundays, sunday_sums, label="Weekly")
+
+
         ax.axhline(y=activity["target"], color='red', linestyle='--', linewidth=2, label='Target')
         ax.legend(
             loc="upper left",
