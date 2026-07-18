@@ -125,7 +125,6 @@ class Home(QWidget):
 
     def createActivityWidget(self, activity):
         activity_widget = QWidget()
-        activity_widget.setStyleSheet("border: 1px solid white")
         activity_container = QHBoxLayout(activity_widget)
         activity_container.setContentsMargins(4, 4, 4, 4)
 
@@ -139,6 +138,10 @@ class Home(QWidget):
             days_left = (due_date - current_date).days + 1
             daily_target = (activity["target"] - activity["total"]) / days_left
 
+        border_color = ("red" if activity["current_quantity"] / daily_target < 0.4 
+                        else "yellow" if activity["current_quantity"] / daily_target < 0.8 
+                        else "green")
+
         check_text = "\u2714"
         min_max_text = "+ "
         if activity["min_max"] == "Maximize":
@@ -148,6 +151,9 @@ class Home(QWidget):
             min_max_text = "- "
             if activity["current_quantity"] > daily_target:
                 check_text = ""
+            border_color = ("green" if activity["current_quantity"] / daily_target < 0.4 
+                        else "yellow" if activity["current_quantity"] / daily_target < 0.8
+                        else "red")
 
         activity_name = QLabel(min_max_text + activity["name"])
         activity_name.setStyleSheet("font-size: 17px; border: none")
@@ -162,6 +168,7 @@ class Home(QWidget):
         activity_container.addStretch()
         activity_container.addWidget(activity_check)
         activity_widget.setFixedHeight(40)
+        activity_widget.setStyleSheet(f"border: 1px solid {border_color}")
 
         return activity_widget
 
