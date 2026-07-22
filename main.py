@@ -11,6 +11,11 @@ def main():
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     win = MainWindow()
     win.show()
+    try:
+        import pyi_splash
+        pyi_splash.close()
+    except ImportError:
+        pass
     sys.exit(app.exec_())
 
 

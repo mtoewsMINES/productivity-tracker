@@ -45,9 +45,8 @@ def newDay(data):
                 data["activity_list"][i]["weekly_total"] = 0
             else:
                 data["activity_list"][i]["weekly_total"] += data["activity_list"][i]["current_quantity"]
-            data["activity_list"][i]["current_quantity"] = 0
             
-            if data["activity_list"][i]["timeline"] == "By Date": #daily scores are summative, and we don't track historical data
+            if data["activity_list"][i]["timeline"] == "By Date": #daily scores are summative, and we don't track historic averages
                 if datetime.strptime(data["activity_list"][i]["due_date"], "%A, %m-%d-%Y") <= datetime.strptime(data["date"], "%A, %m-%d-%Y"): 
                     data["activity_list"][i]["active"] = False #deprecate old longterm goals
                 data["activity_list"][i]["historic_daily_scores"].append(data["activity_list"][i]["current_quantity"] 
@@ -57,10 +56,12 @@ def newDay(data):
                 data["activity_list"][i]["historic_daily_scores"].append(data["activity_list"][i]["current_quantity"])
                 data["activity_list"][i]["historic_average_scores"].append(data["activity_list"][i]["total"] / data["activity_list"][i]["days_tracked"])
 
+            data["activity_list"][i]["current_quantity"] = 0
+
         #update broader data
         data["historic_scores"].append(data["score"]) 
         days_tracked = (datetime.strptime(data["date"], "%A, %m-%d-%Y") - datetime.strptime(data["start_date"], "%A, %m-%d-%Y")).days
-        data["historic_averages"].append(sum(data["historic_scores"]) / (days_tracked or 1))
+        data["historic_averages"].append(sum(data["historic_scores"]) / (len(data["historic_scores"]) or 1)
         data["date"] = (datetime.strptime(data["date"], "%A, %m-%d-%Y") + timedelta(days=1)).strftime("%A, %m-%d-%Y")
 
         return data["date"]
